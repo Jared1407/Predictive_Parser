@@ -26,35 +26,35 @@ void parse_and_generate_AST() {
     parse_program();
 	cout << "1" << endl;
 }
-    void parse_program(){
+void parse_program(){
         //-> decl-section block
         parse_decl_section();
         parse_block();
-    }
+}
 
-    void parse_decl_section{
+void parse_decl_section(){
         //-> scalar-decl-section array-decl-section
         parse_scalar_decl_section();
         parse_array_decl_section();
 
-    }
+}
 
-    void parse_scalar_decl_section{
+void parse_scalar_decl_section(){
         //-> SCALAR id-list
         expect(SCALAR);
         parse_id_list();
 
 
-    }
+}
 
-    void parse_array_decl_section{
+    void parse_array_decl_section(){
         //-> ARRAY id-list
         expect(ARRAY);
         parse_id_list();
 
     }
 
-    void parse_id_list{
+    void parse_id_list(){
         //-> ID
         //-> ID id-list
         expect(ID);
@@ -73,7 +73,7 @@ void parse_and_generate_AST() {
     }
 
 
-    void parse_block{
+    void parse_block(){
         //-> LBRACE stmt-list RBRACE
         expect(LBRACE);
         parse_stmt_list();
@@ -81,7 +81,7 @@ void parse_and_generate_AST() {
 
     }
 
-    void parse_stmt_list{
+    void parse_stmt_list(){
         //-> stmt
         //-> stmt stmt-list
         Token t;
@@ -97,30 +97,30 @@ void parse_and_generate_AST() {
 
     }
 
-    void parse_stmt{
+    void parse_stmt(){
         //-> assign-stmt
         //-> output-stmt
 
     }
 
-    void parse_assign_stmt{
+    void parse_assign_stmt(){
         //-> variable-access EQUAL expr SEMICOLON
 
     }
 
-    void parse_output_stmt{
+    void parse_output_stmt(){
         //-> OUTPUT variable-access SEMICOLON
 
     }
 
-    void parse_variable_access{
+    void parse_variable_access(){
         //-> ID
         //-> ID LBRAC expr RBRAC
         //-> ID LBRAC DOT RBRAC
 
     }
 
-    void parse_expr{
+    void parse_expr(){
         //-> expr MINUS expr
         //-> expr PLUS expr
         //-> expr MULT expr
@@ -132,7 +132,7 @@ void parse_and_generate_AST() {
 
     }
 
-    void parse_primary{
+    void parse_primary(){
         //-> ID
         //-> NUM
 
