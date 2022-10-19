@@ -1,9 +1,12 @@
 EXEC = a.out
-CC = gcc
+CC = g++
 CFLAGS = -c -Wall -g -std=c++11
 
-$(EXEC): tasks.o lexer.0 inputbuf.o execute.o
-	$(CC) -o $(EXEC) tasks.o lexer.o inputbuf.o execute.o
+$(EXEC): tasks.o lexer.o inputbuf.o execute.o project2.o
+	$(CC) -o $(EXEC) tasks.o lexer.o inputbuf.o execute.o project2.o
+
+project2.o: project2.cc
+	$(CC) $(CFLAGS) project2.cc
 
 tasks.o: tasks.cc
 	$(CC) $(CFLAGS) tasks.cc
@@ -19,3 +22,4 @@ execute.o: execute.cc
 
 clean:
 	rm -f *.o $(EXEC)
+

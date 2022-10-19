@@ -1,16 +1,21 @@
 #include <iostream>
+#include <stdlib.h>
 #include <cstdio>
 #include <cstdlib>
-#include "lexer.h"
-#include "execute.h"
 #include "tasks.h"
+#include "execute.h"
+#include "lexer.h"
+
 
 using namespace std;
+
+
 
 //Helper functions
 Token expect(TokenType expected_type)
 {
-    Token t = GetToken();
+    Token t;
+    //t = lexer.GetToken();
     if (t.token_type != expected_type)
     {
         cout << "Error: expected token of type " << expected_type << " but got " << t.token_type << endl;
@@ -19,136 +24,143 @@ Token expect(TokenType expected_type)
     return t;
 }
 
+void syntax_error(){
+    cout << "Syntax Error" << endl;
+    exit(1);
+}
+
 
 // Task 1
 void parse_and_generate_AST() {
-    LexicalAnalyzer lexer;
+
+    cout << "11111" << endl;
     parse_program();
-	cout << "1" << endl;
 }
 void parse_program(){
-        //-> decl-section block
-        parse_decl_section();
-        parse_block();
+    //-> decl-section block
+    parse_decl_section();
+    parse_block();
 }
 
 void parse_decl_section(){
-        //-> scalar-decl-section array-decl-section
-        parse_scalar_decl_section();
-        parse_array_decl_section();
+    //-> scalar-decl-section array-decl-section
+    parse_scalar_decl_section();
+    parse_array_decl_section();
 
 }
 
 void parse_scalar_decl_section(){
-        //-> SCALAR id-list
-        expect(SCALAR);
-        parse_id_list();
+    //-> SCALAR id-list
+    expect(SCALAR);
+    parse_id_list();
 
 
 }
 
-    void parse_array_decl_section(){
-        //-> ARRAY id-list
-        expect(ARRAY);
+void parse_array_decl_section(){
+    //-> ARRAY id-list
+    expect(ARRAY);
+    parse_id_list();
+
+}
+
+void parse_id_list(){
+    //-> ID
+    //-> ID id-list
+    expect(ID);
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID){
         parse_id_list();
-
-    }
-
-    void parse_id_list(){
-        //-> ID
-        //-> ID id-list
-        expect(ID);
-        Token t;
-        t = lexer.peek(1);
-        if(t.token_type == ID){
-            parse_id_list();
-        }else if (t.token_type == LBRACE || t.token_type == ARRAY){
-            return;
-        }else{
-            cout << "Error: expected ID or LBRACE" << endl;
-            exit(1);
-        }
-
-
+    }else if (t.token_type == LBRACE || t.token_type == ARRAY){
+        cout << "1" << endl;
+        return;
+    }else{
+        cout << "Error: expected ID or LBRACE" << endl;
+        exit(1);
     }
 
 
-    void parse_block(){
-        //-> LBRACE stmt-list RBRACE
-        expect(LBRACE);
+}
+
+
+void parse_block(){
+    //-> LBRACE stmt-list RBRACE
+    expect(LBRACE);
+    parse_stmt_list();
+    expect(RBRACE);
+
+}
+
+void parse_stmt_list(){
+    //-> stmt
+    //-> stmt stmt-list
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID || t.token_type == OUTPUT){
+        parse_stmt();
+        // If the stmt-list is only a statement then parsing
+        // stmt_list will return and cause no issues
         parse_stmt_list();
-        expect(RBRACE);
-
+    }else{
+        syntax_error();
     }
 
-    void parse_stmt_list(){
-        //-> stmt
-        //-> stmt stmt-list
-        Token t;
-        t = lexer.peek(1);
-        if(t.token_type == ID || t.token_type == OUTPUT){
-            parse_stmt();
-            // If the stmt-list is only a statement then parsing
-            // stmt_list will return and cause no issues
-            parse_stmt_list();
-        }else{
-            syntax_error();
-        }
+}
 
-    }
+void parse_stmt(){
+    cout << "HERE" << endl;
+    exit(1);
+    //-> assign-stmt
+    //-> output-stmt
 
-    void parse_stmt(){
-        //-> assign-stmt
-        //-> output-stmt
+}
 
-    }
+void parse_assign_stmt(){
+    //-> variable-access EQUAL expr SEMICOLON
 
-    void parse_assign_stmt(){
-        //-> variable-access EQUAL expr SEMICOLON
+}
 
-    }
+void parse_output_stmt(){
+    //-> OUTPUT variable-access SEMICOLON
 
-    void parse_output_stmt(){
-        //-> OUTPUT variable-access SEMICOLON
+}
 
-    }
+void parse_variable_access(){
+    //-> ID
+    //-> ID LBRAC expr RBRAC
+    //-> ID LBRAC DOT RBRAC
 
-    void parse_variable_access(){
-        //-> ID
-        //-> ID LBRAC expr RBRAC
-        //-> ID LBRAC DOT RBRAC
+}
 
-    }
+void parse_expr(){
+    //-> expr MINUS expr
+    //-> expr PLUS expr
+    //-> expr MULT expr
+    //-> expr DIV expr
+    //-> LPAREN expr RPAREN
+    //-> expr LBRAC expr RBRAC
+    //-> expr LBRAC DOT RBRAC
+    //-> primary
 
-    void parse_expr(){
-        //-> expr MINUS expr
-        //-> expr PLUS expr
-        //-> expr MULT expr
-        //-> expr DIV expr
-        //-> LPAREN expr RPAREN
-        //-> expr LBRAC expr RBRAC
-        //-> expr LBRAC DOT RBRAC
-        //-> primary
+}
+void parse_primary(){
+//-> ID
+    //-> NUM
 
-    }
-
-    void parse_primary(){
-        //-> ID
-        //-> NUM
-
-    }
+}
 
 
 // Task 2
 void parse_and_type_check()
 {
-	cout << "2" << endl;
+	//cout << "2" << endl;
 }
 
 // Task 3
 instNode* parse_and_generate_statement_list()
 {
-    cout << "3" << endl;
+    //cout << "3" << endl;
 
     // The following is the hardcoded statement list 
     // generated for a specific program

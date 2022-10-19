@@ -14,6 +14,7 @@ using namespace std;
 
 int main (int argc, char* argv[])
 {
+    LexicalAnalyzer();
     int task;
 
     if (argc < 2)
@@ -21,14 +22,11 @@ int main (int argc, char* argv[])
         cout << "Error: missing argument\n";
         return 1;
     }
-
     /*
        Note that by convention argv[0] is the name of your executable,
        and the first argument to your program is stored in argv[1]
      */
-
     task = atoi(argv[1]);
-    
 
     switch (task) {
         case 1: // Task 1
