@@ -30,6 +30,7 @@ void parse_primary();
 Token expect(TokenType expected_type);
 void syntax_error();
 void parse_and_generate_AST();
+int precedence(TokenType t);
 
 //Task 2
 void parse_and_type_check();
@@ -40,8 +41,9 @@ instNode* parse_and_generate_statement_list();
 
 //Table for abstract syntax tree
 // < =
+
 /*
-int ast_table[12][12] = {
+ * = {
         //        +        -        *        /        (        )        [        .       ]       NUM       ID       $
         {'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// +
         {'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// -
@@ -56,7 +58,8 @@ int ast_table[12][12] = {
         {'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// ID
         {'<', '<', '<', '<', '<', 'E', '<', 'E', 'E', '<', '<', 'A'},// $
 };
-*/
+
+ */
 
 
 

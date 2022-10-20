@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <cstdlib>
+#include <stack>
 #include "tasks.h"
 #include "execute.h"
 #include "lexer.h"
@@ -28,9 +29,56 @@ void syntax_error(){
     exit(1);
 }
 
+int precedence(TokenType t) {
+    if(t == PLUS) {
+        return 0;
+    }else if(t == MINUS){
+        return 1;
+    }else if(t == MULT){
+        return 2;
+    }else if(t == DIV){
+        return 3;
+    }else if(t == LPAREN){
+        return 4;
+    }else if(t == RPAREN){
+        return 5;
+    }else if(t == LBRAC){
+        return 6;
+    }else if(t == DOT){
+        return 7;
+    }else if(t == RBRAC){
+        return 8;
+    }else if(t == NUM){
+        return 9;
+    }else if(t == ID){
+        return 10;
+    }else if(t == END_OF_FILE) {
+        return 11;
+    }else{
+        return -1;
+    }
+}
+
+int ast_table[12][12] = {
+//        +        -        *        /        (        )        [        .       ]       NUM       ID       $
+{'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// +
+{'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// -
+{'>', '>', '>', '>', '<', '>', '<', 'E', '>', '<', '<', '>'},// *
+{'>', '>', '>', '>', '<', '>', '<', 'E', '>', '<', '<', '>'},// /
+{'<', '<', '<', '<', '<', '=', '<', 'E', '<', '<', '<', 'E'},// (
+{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// )
+{'<', '<', '<', '<', '<', '<', '<', '=', '=', '<', '<', 'E'},// [
+{'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', '=', 'E', 'E', 'E'},// .
+{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// ]
+{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// NUM
+{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// ID
+{'<', '<', '<', '<', '<', 'E', '<', 'E', 'E', '<', '<', 'A'},// $
+};
+
 
 // Task 1
 void parse_and_generate_AST() {
+
 
     cout << "11111" << endl;
     parse_program();
@@ -166,15 +214,12 @@ void parse_assign_stmt(){
         expect(ID);
         parse_variable_access();
 
-
         expect(EQUAL);
         parse_expr();
         expect(SEMICOLON);
     }else{
         syntax_error();
     }
-
-
 }
 
 void parse_output_stmt(){
@@ -188,7 +233,6 @@ void parse_output_stmt(){
     }else{
         syntax_error();
     }
-
 }
 
 void parse_variable_access(){
@@ -216,7 +260,6 @@ void parse_variable_access(){
     }else{
         syntax_error();
     }
-
 }
 
 void parse_expr(){
@@ -228,35 +271,51 @@ void parse_expr(){
     //-> expr LBRAC expr RBRAC
     //-> expr LBRAC DOT RBRAC
     //-> primary
-    Token t, t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
-    if(t.token_type == ID || t.token_type == NUM){
-        parse_primary();
-        if(t2.token_type == MINUS || t2.token_type == PLUS || t2.token_type == MULT || t2.token_type == DIV){
-            expect(t2.token_type);
-            parse_expr();
-        }else if(t2.token_type == LBRAC){
-            expect(LBRAC);
+    // Use operative precedence parsing
+
+    //Input is a string W
+    //Output is an abstract syntax tree E
+    //Initially stack contains $, scanner reads start of W
+
+    //Initialize stack
+    stack<TokenType> s;
+
+    //Initialize input
+    Token t;
+    TokenType a1, b1;
+    int a, b;
+    // a and b
+
+
+    while(!s.empty()){
+
+        if('$' == s.top()){
+            //If stack is empty, then input is accepted
+            return;
+        }else{
             //t = lexer.peek(1);
-            if(t.token_type == DOT){
-                expect(DOT);
-                expect(RBRAC);
-            }else if(t.token_type == ID || t.token_type == NUM){
-                parse_expr();
-                expect(RBRAC);
+            b1 = t.token_type;
+            a1 = s.top();
+            a = precedence(a1);
+            b = precedence(b1);
+            if(ast_table[a][b] == '<' || ast_table[a][b] == '=') {
+                //t = lexer.GetToken();
+                s.push(t.token_type);
+            }else if(ast_table[a][b] == '>'){
+                //Reduce
+                stack<TokenType> RHS;
+                while(ast_table[precedence(s.top())][precedence(t.token_type)] == '>'){
+                    RHS.push(s.top());
+                    s.pop();
+                }
+                // if E-> RHS is a production, then reduce E -> RHS
+                // and stack.push(E)
+                // else syntax_error();
             }else{
                 syntax_error();
             }
         }
-    }else if(t.token_type == LPAREN){
-        expect(LPAREN);
-        parse_expr();
-        expect(RPAREN);
-    }else{
-        syntax_error();
     }
-
 }
 void parse_primary(){
     //-> ID
