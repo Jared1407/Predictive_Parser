@@ -1,17 +1,15 @@
 #include <iostream>
-#include <stdlib.h>
 #include <cstdio>
 #include <cstdlib>
 #include <stack>
 #include "tasks.h"
-#include "execute.h"
-#include "lexer.h"
 
 
 using namespace std;
 
+
 //Helper functions
-Token expect(TokenType expected_type)
+Token Parser::expect(TokenType expected_type)
 {
     Token t;
 
@@ -24,12 +22,12 @@ Token expect(TokenType expected_type)
     return t;
 }
 
-void syntax_error(){
+void Parser::syntax_error(){
     cout << "SNYATX EORRR" << endl;
     exit(1);
 }
 
-int precedence(TokenType t) {
+int Parser::precedence(TokenType t) {
     if(t == PLUS) {
         return 0;
     }else if(t == MINUS){
@@ -59,210 +57,22 @@ int precedence(TokenType t) {
     }
 }
 
-int ast_table[12][12] = {
-//        +        -        *        /        (        )        [        .       ]       NUM       ID       $
-{'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// +
-{'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// -
-{'>', '>', '>', '>', '<', '>', '<', 'E', '>', '<', '<', '>'},// *
-{'>', '>', '>', '>', '<', '>', '<', 'E', '>', '<', '<', '>'},// /
-{'<', '<', '<', '<', '<', '=', '<', 'E', '<', '<', '<', 'E'},// (
-{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// )
-{'<', '<', '<', '<', '<', '<', '<', '=', '=', '<', '<', 'E'},// [
-{'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', '=', 'E', 'E', 'E'},// .
-{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// ]
-{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// NUM
-{'>', '>', '>', '>', 'E', '>', '>', 'E', '>', 'E', 'E', '>'},// ID
-{'<', '<', '<', '<', '<', 'E', '<', 'E', 'E', '<', '<', 'A'},// $
-};
-
 
 // Task 1
-void parse_and_generate_AST() {
-
-
-    cout << "11111" << endl;
-    parse_program();
-}
-void parse_program(){
-    //-> decl-section block
-    Token t;
-    //t = lexer.peek(1);;
-    if(t.token_type == SCALAR) {
-        parse_decl_section();
-        parse_block();
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_decl_section(){
-    //-> scalar-decl-section array-decl-section
-    Token t;
-    //t = lexer.peek(1);
-    if(t.token_type == SCALAR) {
-        parse_scalar_decl_section();
-        parse_array_decl_section();
-    }else if(t.token_type == END_OF_FILE){
-        return;
-    }else{
-        syntax_error();
-    }
-
-}
-
-void parse_scalar_decl_section(){
-    //-> SCALAR id-list
-    Token t;
-    //t = lexer.GetToken();
-    if(t.token_type == SCALAR){
-        expect(SCALAR);
-        parse_id_list();
-    }else if(t.token_type == ARRAY || t.token_type == RBRACE){
-        return;
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_array_decl_section(){
-    //-> ARRAY id-list
-    Token t;
-    //t = lexer.GetToken();
-    if(t.token_type == ARRAY){
-        expect(ARRAY);
-        parse_id_list();
-    }else if(t.token_type == LBRACE){
-        return;
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_id_list(){
+void Parser::parse_primary() {
     //-> ID
-    //-> ID id-list
-    expect(ID);
-    Token t , t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
-    if(t.token_type == ID){
-        expect(ID);
-        if(t2.token_type == ID){
-            parse_id_list();
-        }
-    }else if(t.token_type == RBRACE) {
-        return;
-    }else{
-        syntax_error();
-    }
-}
-
-
-void parse_block() {
-    //-> LBRACE stmt-list RBRACE
-    expect(LBRACE);
-    Token t;
-    //t = lexer.GetToken();
-    if(t.token_type == ID || t.token_type == OUTPUT){
-        parse_stmt_list();
-        expect(RBRACE);
-    }else if(t.token_type == END_OF_FILE){
-        return;
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_stmt_list() {
-    //-> stmt
-    //-> stmt stmt-list
-    Token t, t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
-    if(t.token_type == ID || t.token_type == OUTPUT){
-        parse_stmt();
-        if(t2.token_type == ID || t2.token_type == OUTPUT){
-            parse_stmt_list();
-        }
-    }else if(t.token_type == RBRACE){
-        return;
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_stmt(){
-    //-> assign-stmt
-    //-> output-stmt
-   Token t;
-    //t = lexer.peek(1);
-    if(t.token_type == ID){
-        parse_assign_stmt();
-    }else if(t.token_type == OUTPUT){
-        parse_output_stmt();
-    } else{
-        syntax_error();
-    }
-}
-
-void parse_assign_stmt(){
-    //-> variable-access EQUAL expr SEMICOLON
-
+    //-> NUM
     Token t;
     //t = lexer.peek(1);
-    if(t.token_type == ID){
-        expect(ID);
-        parse_variable_access();
-
-        expect(EQUAL);
-        parse_expr();
-        expect(SEMICOLON);
+    if(t.token_type == ID || t.token_type == NUM){
+        expect(t.token_type);
     }else{
         syntax_error();
     }
+
 }
 
-void parse_output_stmt(){
-    //-> OUTPUT variable-access SEMICOLON
-    Token t;
-    //t = lexer.peek(1);
-    if(t.token_type == OUTPUT){
-        expect(OUTPUT);
-        parse_variable_access();
-        expect(SEMICOLON);
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_variable_access(){
-    //-> ID
-    //-> ID LBRAC expr RBRAC
-    //-> ID LBRAC DOT RBRAC
-    Token t, t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
-    if(t.token_type == ID){
-        expect(ID);
-        if(t2.token_type == LBRAC){
-            expect(LBRAC);
-            //t = lexer.peek(1);
-            if(t.token_type == DOT){
-                expect(DOT);
-                expect(RBRAC);
-            }else if(t.token_type == ID || t.token_type == NUM){
-                parse_expr();
-                expect(RBRAC);
-            }else{
-                syntax_error();
-            }
-        }
-    }else{
-        syntax_error();
-    }
-}
-
-void parse_expr(){
+void Parser::parse_expr(){
     //-> expr MINUS expr
     //-> expr PLUS expr
     //-> expr MULT expr
@@ -317,20 +127,195 @@ void parse_expr(){
         }
     }
 }
-void parse_primary(){
+
+void Parser::parse_variable_access(){
     //-> ID
-    //-> NUM
+    //-> ID LBRAC expr RBRAC
+    //-> ID LBRAC DOT RBRAC
+    Token t, t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID){
+        expect(ID);
+        if(t2.token_type == LBRAC){
+            expect(LBRAC);
+            //t = lexer.peek(1);
+            if(t.token_type == DOT){
+                expect(DOT);
+                expect(RBRAC);
+            }else if(t.token_type == ID || t.token_type == NUM){
+                parse_expr();
+                expect(RBRAC);
+            }else{
+                syntax_error();
+            }
+        }
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_output_stmt(){
+    //-> OUTPUT variable-access SEMICOLON
     Token t;
     //t = lexer.peek(1);
-    if(t.token_type == ID || t.token_type == NUM){
-        expect(t.token_type);
+    if(t.token_type == OUTPUT){
+        expect(OUTPUT);
+        parse_variable_access();
+        expect(SEMICOLON);
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_assign_stmt(){
+    //-> variable-access EQUAL expr SEMICOLON
+
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID){
+        expect(ID);
+        parse_variable_access();
+
+        expect(EQUAL);
+        parse_expr();
+        expect(SEMICOLON);
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_stmt(){
+    //-> assign-stmt
+    //-> output-stmt
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID){
+        parse_assign_stmt();
+    }else if(t.token_type == OUTPUT){
+        parse_output_stmt();
+    } else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_stmt_list() {
+    //-> stmt
+    //-> stmt stmt-list
+    Token t, t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID || t.token_type == OUTPUT){
+        parse_stmt();
+        if(t2.token_type == ID || t2.token_type == OUTPUT){
+            parse_stmt_list();
+        }
+    }else if(t.token_type == RBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_block() {
+    //-> LBRACE stmt-list RBRACE
+    expect(LBRACE);
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == ID || t.token_type == OUTPUT){
+        parse_stmt_list();
+        expect(RBRACE);
+    }else if(t.token_type == END_OF_FILE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_id_list(){
+    //-> ID
+    //-> ID id-list
+    expect(ID);
+    Token t , t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID){
+        expect(ID);
+        if(t2.token_type == ID){
+            parse_id_list();
+        }
+    }else if(t.token_type == RBRACE) {
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_array_decl_section(){
+    //-> ARRAY id-list
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == ARRAY){
+        expect(ARRAY);
+        parse_id_list();
+    }else if(t.token_type == LBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_scalar_decl_section(){
+    //-> SCALAR id-list
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == SCALAR){
+        expect(SCALAR);
+        parse_id_list();
+    }else if(t.token_type == ARRAY || t.token_type == RBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void Parser::parse_decl_section(){
+    //-> scalar-decl-section array-decl-section
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == SCALAR) {
+        parse_scalar_decl_section();
+        parse_array_decl_section();
+    }else if(t.token_type == END_OF_FILE){
+        return;
     }else{
         syntax_error();
     }
 
 }
 
+void Parser::parse_program(){
+    //-> decl-section block
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == SCALAR) {
+        parse_decl_section();
+        parse_block();
+    }else{
+        syntax_error();
+    }
+}
 
+void parse_and_generate_AST() {
+    LexicalAnalyzer();
+    Parser parser;
+
+
+    cout << "11111" << endl;
+
+    parser.parse_program();
+
+}
 // Task 2
 void parse_and_type_check()
 {
