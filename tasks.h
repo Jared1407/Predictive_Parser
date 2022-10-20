@@ -4,11 +4,7 @@
 #include "execute.h"
 #include "lexer.h"
 
-
-
 using namespace std;
-
-
 
 //Task 1
 void parse_and_generate_AST();

@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <stack>
 #include "tasks.h"
+#include "lexer.h"
+#include "execute.h"
 
 
 using namespace std;
@@ -306,8 +308,11 @@ void Parser::parse_program(){
     }
 }
 
+
+
 void parse_and_generate_AST() {
-    LexicalAnalyzer();
+    //Parse the program
+
     Parser parser;
 
 

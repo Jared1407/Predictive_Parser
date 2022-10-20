@@ -28,7 +28,7 @@ int main (int argc, char* argv[])
      */
 
     task = atoi(argv[1]);
-    
+
 
     switch (task) {
         case 1: // Task 1
