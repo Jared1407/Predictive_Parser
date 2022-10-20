@@ -24,7 +24,7 @@ Token expect(TokenType expected_type)
 }
 
 void syntax_error(){
-    cout << "Syntax Error" << endl;
+    cout << "SNYATX EORRR" << endl;
     exit(1);
 }
 
@@ -42,9 +42,9 @@ void parse_program(){
     if(t.token_type == SCALAR) {
         parse_decl_section();
         parse_block();
+    }else{
+        syntax_error();
     }
-
-
 }
 
 void parse_decl_section(){
