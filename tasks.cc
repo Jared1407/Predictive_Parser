@@ -159,10 +159,14 @@ void parse_stmt(){
 
 void parse_assign_stmt(){
     //-> variable-access EQUAL expr SEMICOLON
+
     Token t;
     //t = lexer.peek(1);
     if(t.token_type == ID){
+        expect(ID);
         parse_variable_access();
+
+
         expect(EQUAL);
         parse_expr();
         expect(SEMICOLON);
