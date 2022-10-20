@@ -9,12 +9,11 @@
 
 using namespace std;
 
-
-
 //Helper functions
 Token expect(TokenType expected_type)
 {
     Token t;
+
     //t = lexer.GetToken();
     if (t.token_type != expected_type)
     {
@@ -38,91 +37,153 @@ void parse_and_generate_AST() {
 }
 void parse_program(){
     //-> decl-section block
-    parse_decl_section();
-    parse_block();
-}
-
-void parse_decl_section(){
-    //-> scalar-decl-section array-decl-section
-    parse_scalar_decl_section();
-    parse_array_decl_section();
-
-}
-
-void parse_scalar_decl_section(){
-    //-> SCALAR id-list
-    expect(SCALAR);
-    parse_id_list();
-
-
-}
-
-void parse_array_decl_section(){
-    //-> ARRAY id-list
-    expect(ARRAY);
-    parse_id_list();
-
-}
-
-void parse_id_list(){
-    //-> ID
-    //-> ID id-list
-    expect(ID);
     Token t;
-    //t = lexer.peek(1);
-    if(t.token_type == ID){
-        parse_id_list();
-    }else if (t.token_type == LBRACE || t.token_type == ARRAY){
-        cout << "1" << endl;
-        return;
-    }else{
-        cout << "Error: expected ID or LBRACE" << endl;
-        exit(1);
+    //t = lexer.peek(1);;
+    if(t.token_type == SCALAR) {
+        parse_decl_section();
+        parse_block();
     }
 
 
 }
 
-
-void parse_block(){
-    //-> LBRACE stmt-list RBRACE
-    expect(LBRACE);
-    parse_stmt_list();
-    expect(RBRACE);
-
-}
-
-void parse_stmt_list(){
-    //-> stmt
-    //-> stmt stmt-list
+void parse_decl_section(){
+    //-> scalar-decl-section array-decl-section
     Token t;
     //t = lexer.peek(1);
-    if(t.token_type == ID || t.token_type == OUTPUT){
-        parse_stmt();
-        // If the stmt-list is only a statement then parsing
-        // stmt_list will return and cause no issues
-        parse_stmt_list();
+    if(t.token_type == SCALAR) {
+        parse_scalar_decl_section();
+        parse_array_decl_section();
+    }else if(t.token_type == END_OF_FILE){
+        return;
     }else{
         syntax_error();
     }
 
 }
 
+void parse_scalar_decl_section(){
+    //-> SCALAR id-list
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == SCALAR){
+        expect(SCALAR);
+        parse_id_list();
+    }else if(t.token_type == ARRAY || t.token_type == RBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void parse_array_decl_section(){
+    //-> ARRAY id-list
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == ARRAY){
+        expect(ARRAY);
+        parse_id_list();
+    }else if(t.token_type == LBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void parse_id_list(){
+    //-> ID
+    //-> ID id-list
+    expect(ID);
+    Token t , t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID){
+        expect(ID);
+        if(t2.token_type == ID){
+            parse_id_list();
+        }
+    }else if(t.token_type == RBRACE) {
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+
+void parse_block() {
+    //-> LBRACE stmt-list RBRACE
+    expect(LBRACE);
+    Token t;
+    //t = lexer.GetToken();
+    if(t.token_type == ID || t.token_type == OUTPUT){
+        parse_stmt_list();
+        expect(RBRACE);
+    }else if(t.token_type == END_OF_FILE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
+void parse_stmt_list() {
+    //-> stmt
+    //-> stmt stmt-list
+    Token t, t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID || t.token_type == OUTPUT){
+        parse_stmt();
+        if(t2.token_type == ID || t2.token_type == OUTPUT){
+            parse_stmt_list();
+        }
+    }else if(t.token_type == RBRACE){
+        return;
+    }else{
+        syntax_error();
+    }
+}
+
 void parse_stmt(){
-    cout << "HERE" << endl;
-    exit(1);
     //-> assign-stmt
     //-> output-stmt
-
+   Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID){
+        parse_assign_stmt();
+    }else if(t.token_type == OUTPUT){
+        parse_output_stmt();
+    } else{
+        syntax_error();
+    }
 }
 
 void parse_assign_stmt(){
     //-> variable-access EQUAL expr SEMICOLON
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID){
+        parse_variable_access();
+        expect(EQUAL);
+        parse_expr();
+        expect(SEMICOLON);
+    }else{
+        syntax_error();
+    }
+
 
 }
 
 void parse_output_stmt(){
     //-> OUTPUT variable-access SEMICOLON
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == OUTPUT){
+        expect(OUTPUT);
+        parse_variable_access();
+        expect(SEMICOLON);
+    }else{
+        syntax_error();
+    }
 
 }
 
@@ -130,6 +191,27 @@ void parse_variable_access(){
     //-> ID
     //-> ID LBRAC expr RBRAC
     //-> ID LBRAC DOT RBRAC
+    Token t, t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID){
+        expect(ID);
+        if(t2.token_type == LBRAC){
+            expect(LBRAC);
+            //t = lexer.peek(1);
+            if(t.token_type == DOT){
+                expect(DOT);
+                expect(RBRAC);
+            }else if(t.token_type == ID || t.token_type == NUM){
+                parse_expr();
+                expect(RBRAC);
+            }else{
+                syntax_error();
+            }
+        }
+    }else{
+        syntax_error();
+    }
 
 }
 
@@ -142,11 +224,46 @@ void parse_expr(){
     //-> expr LBRAC expr RBRAC
     //-> expr LBRAC DOT RBRAC
     //-> primary
+    Token t, t2;
+    //t = lexer.peek(1);
+    //t2 = lexer.peek(2);
+    if(t.token_type == ID || t.token_type == NUM){
+        parse_primary();
+        if(t2.token_type == MINUS || t2.token_type == PLUS || t2.token_type == MULT || t2.token_type == DIV){
+            expect(t2.token_type);
+            parse_expr();
+        }else if(t2.token_type == LBRAC){
+            expect(LBRAC);
+            //t = lexer.peek(1);
+            if(t.token_type == DOT){
+                expect(DOT);
+                expect(RBRAC);
+            }else if(t.token_type == ID || t.token_type == NUM){
+                parse_expr();
+                expect(RBRAC);
+            }else{
+                syntax_error();
+            }
+        }
+    }else if(t.token_type == LPAREN){
+        expect(LPAREN);
+        parse_expr();
+        expect(RPAREN);
+    }else{
+        syntax_error();
+    }
 
 }
 void parse_primary(){
-//-> ID
+    //-> ID
     //-> NUM
+    Token t;
+    //t = lexer.peek(1);
+    if(t.token_type == ID || t.token_type == NUM){
+        expect(t.token_type);
+    }else{
+        syntax_error();
+    }
 
 }
 

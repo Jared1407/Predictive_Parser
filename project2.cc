@@ -14,7 +14,6 @@ using namespace std;
 
 int main (int argc, char* argv[])
 {
-    LexicalAnalyzer();
     int task;
 
     if (argc < 2)

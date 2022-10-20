@@ -10,7 +10,6 @@ using namespace std;
 
 
 
-
 //Task 1
 void parse_program();
 void parse_decl_section();
