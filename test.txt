@@ -1,0 +1,2 @@
+SCALAR a b c
+ARRAY 1 2 3
