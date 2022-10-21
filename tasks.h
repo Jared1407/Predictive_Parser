@@ -37,6 +37,9 @@ public:
     //Must be public
     void readAndPrintAllInput();
     void parse_program();
+    bool is_terminal(TokenType t);
+    TokenType terminalpeek(stack<TokenType> s);
+
     int ast_table[12][12] = {
         //        +        -        *        /        (        )        [        .       ]       NUM       ID       $
         {'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// +

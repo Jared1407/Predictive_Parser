@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stack>
+#include <string>
 #include "tasks.h"
 #include "lexer.h"
 #include "execute.h"
@@ -28,6 +29,28 @@ Token Parser::expect(TokenType expected_type)
 void Parser::syntax_error(){
     cout << "SNYATX EORRR" << endl;
     exit(1);
+}
+
+TokenType Parser::terminalpeek(stack<TokenType> s){
+    //terminal at the top of stack or just below
+    //if top is nonterminal
+    stack<TokenType> temp = s;
+    if(s.top() == PLUS || s.top() == MINUS || s.top() == MULT || s.top() == DIV || s.top() == LBRACE || s.top() == RBRACE || s.top() == LBRAC || s.top() == DOT || s.top() == RBRAC || s.top() == NUM || s.top() == ID || s.top() == END_OF_FILE){
+        return s.top();
+    }
+    else{
+        temp.pop();
+        return temp.top();
+    }
+
+}
+
+bool Parser::is_terminal(TokenType t){
+    if(t == PLUS || t == MINUS || t == MULT || t == DIV || t == LBRACE || t == RBRACE || t == LBRAC || t == RBRAC || t == DOT || t == NUM || t == ID || t == END_OF_FILE){
+        return true;
+    }else{
+        return false;
+    }
 }
 
 int Parser::precedence(TokenType t) {
@@ -76,6 +99,7 @@ void Parser::parse_primary() {
 }
 
 void Parser::parse_expr(){
+    //W.I.P
     //-> expr MINUS expr
     //-> expr PLUS expr
     //-> expr MULT expr
@@ -92,45 +116,70 @@ void Parser::parse_expr(){
 
     //Initialize stack
     stack<TokenType> s;
+    stack<TokenType> temp;
 
     //Initialize input
     Token t;
     TokenType a1, b1;
     int a, b;
     // a and b
+    Token test = lexer.peek(1);
+    cout << "expr" << endl;
+    test.Print();
+
+    //Push $ onto stack
+    //s.push(END_OF_FILE);
 
 
-    while(!s.empty()){
+    while(!s.empty()) {
 
-        if('$' == s.top()){
+        if ('$' == s.top()) {
             //If stack is empty, then input is accepted
             return;
-        }else{
+        } else {
             t = lexer.peek(1);
             b1 = t.token_type;
-            a1 = s.top();
+            a1 = terminalpeek(s);
             a = precedence(a1);
             b = precedence(b1);
-            if(ast_table[a][b] == '<' || ast_table[a][b] == '=') {
+            cout << ast_table[a][b] << endl;
+            if (ast_table[a][b] == '<' || ast_table[a][b] == '=') {
                 t = lexer.GetToken();
+                t.Print();
                 s.push(t.token_type);
-            }else if(ast_table[a][b] == '>'){
+            } else if (ast_table[a][b] == '>') {
                 //Reduce
                 stack<TokenType> RHS;
-                while(ast_table[precedence(s.top())][precedence(t.token_type)] == '>'){
-                    RHS.push(s.top());
+                /*
+                while (true) {
+
+                    TokenType temps = s.top();
+                    TokenType last_popped_term;
                     s.pop();
+
+                    if (is_terminal(temps)) {
+                        last_popped_term = temps;
+                        RHS.push(temps);
+                    }
+                    if (is_terminal(s.top()) && ast_table[precedence(terminalpeek(s))][precedence(last_popped_term)] == '<') {
+                        false;
+                    }
                 }
+                 */
+
                 // if E-> RHS is a production, then reduce E -> RHS
                 // and stack.push(E)
                 // else syntax_error();
-            }else{
+
+            } else {
                 syntax_error();
             }
         }
     }
 }
 
+// Parse_variable access may not be a necessary function as it has already been
+// implemented in parse_assign_stmt
 void Parser::parse_variable_access(){
     //-> ID
     //-> ID LBRAC expr RBRAC
@@ -160,6 +209,7 @@ void Parser::parse_variable_access(){
 
 void Parser::parse_output_stmt(){
     //-> OUTPUT variable-access SEMICOLON
+    //W.I.P
     Token t;
     t = lexer.peek(1);
     if(t.token_type == OUTPUT){
@@ -173,24 +223,38 @@ void Parser::parse_output_stmt(){
 
 void Parser::parse_assign_stmt(){
     //-> variable-access EQUAL expr SEMICOLON
+    Token test = lexer.peek(1);
+    cout << "assign stmt" << endl;
+    test.Print();
 
-    Token t;
-    t = lexer.peek(1);
-    if(t.token_type == ID){
-        expect(ID);
-        parse_variable_access();
-
-        expect(EQUAL);
+    expect(ID);
+    Token t1, t2;
+    t1 = lexer.peek(1);
+    t2 = lexer.peek(2);
+    if(t1.token_type == LBRAC && t2.token_type == DOT){
+        expect(LBRAC);
+        expect(DOT);
+        expect(RBRAC);
+    }else if(t1.token_type == LBRAC && (t2.token_type == ID || t2.token_type == NUM)){
+        expect(LBRAC);
         parse_expr();
-        expect(SEMICOLON);
+        expect(RBRAC);
     }else{
-        syntax_error();
+
+
     }
+    expect(EQUAL);
+    parse_expr();
+    expect(SEMICOLON);
 }
+
 
 void Parser::parse_stmt(){
     //-> assign-stmt
     //-> output-stmt
+    Token test = lexer.peek(1);
+    cout << "stmt" << endl;
+    test.Print();
     Token t;
     t = lexer.peek(1);
     if(t.token_type == ID){
@@ -198,6 +262,7 @@ void Parser::parse_stmt(){
     }else if(t.token_type == OUTPUT){
         parse_output_stmt();
     } else{
+        cout << "stmt syntax error" << endl;
         syntax_error();
     }
 }
@@ -205,32 +270,43 @@ void Parser::parse_stmt(){
 void Parser::parse_stmt_list() {
     //-> stmt
     //-> stmt stmt-list
+    Token test = lexer.peek(1);
+    cout << "stmt list" << endl;
+    test.Print();
     Token t, t2;
     t = lexer.peek(1);
     t2 = lexer.peek(2);
-    if(t.token_type == ID || t.token_type == OUTPUT){
-        parse_stmt();
-        if(t2.token_type == ID || t2.token_type == OUTPUT){
+    if(t.token_type == ID){
+        if(t2.token_type == LBRAC || t2.token_type == LBRACE || t2.token_type == EQUAL){
+            parse_stmt();
             parse_stmt_list();
         }
+    }else if(t.token_type == OUTPUT){
+        parse_stmt();
+        parse_stmt_list();
     }else if(t.token_type == RBRACE){
         return;
     }else{
+        cout << "stmt_list syntax error" << endl;
         syntax_error();
     }
 }
 
 void Parser::parse_block() {
     //-> LBRACE stmt-list RBRACE
+    Token test = lexer.peek(1);
+    cout << "block" << endl;
+    test.Print();
     expect(LBRACE);
     Token t;
-    t = lexer.GetToken();
+    t = lexer.peek(1);
     if(t.token_type == ID || t.token_type == OUTPUT){
         parse_stmt_list();
         expect(RBRACE);
     }else if(t.token_type == END_OF_FILE){
         return;
     }else{
+        cout << "block syntax error" << endl;
         syntax_error();
     }
 }
@@ -238,18 +314,18 @@ void Parser::parse_block() {
 void Parser::parse_id_list(){
     //-> ID
     //-> ID id-list
+    Token test = lexer.peek(1);
+    cout << "id list" << endl;
+    test.Print();
     expect(ID);
     Token t , t2;
     t = lexer.peek(1);
-    t2 = lexer.peek(2);
     if(t.token_type == ID){
-        expect(ID);
-        if(t2.token_type == ID){
-            parse_id_list();
-        }
-    }else if(t.token_type == RBRACE) {
+        parse_id_list();
+    }else if(t.token_type == LBRACE || t.token_type == ARRAY) {
         return;
     }else{
+        cout <<"id list syntax error" << endl;
         syntax_error();
     }
 }
@@ -257,13 +333,14 @@ void Parser::parse_id_list(){
 void Parser::parse_array_decl_section(){
     //-> ARRAY id-list
     Token t;
-    t = lexer.GetToken();
+    t = lexer.peek(1);
     if(t.token_type == ARRAY){
         expect(ARRAY);
         parse_id_list();
     }else if(t.token_type == LBRACE){
         return;
     }else{
+        cout << "array decl section syntax error" << endl;
         syntax_error();
     }
 }
@@ -271,21 +348,33 @@ void Parser::parse_array_decl_section(){
 void Parser::parse_scalar_decl_section(){
     //-> SCALAR id-list
     Token t;
-    t = lexer.GetToken();
+    t = lexer.peek(1);
+    cout << "scalar decl section" << endl;
+    t.Print();
     if(t.token_type == SCALAR){
         expect(SCALAR);
         parse_id_list();
-    }else if(t.token_type == ARRAY || t.token_type == RBRACE){
+    }else if(t.token_type == ARRAY){
         return;
     }else{
+        cout << "scalar decl section syntax error" << endl;
         syntax_error();
     }
 }
 
 void Parser::parse_decl_section(){
     //-> scalar-decl-section array-decl-section
+    Token t;
+    t = lexer.peek(1);
+    if(t.token_type == SCALAR) {
         parse_scalar_decl_section();
         parse_array_decl_section();
+    }else if(t.token_type == LBRACE) {
+        return;
+    }else{
+        cout << "decl section syntax error" << endl;
+        syntax_error();
+    }
 
 }
 
@@ -293,6 +382,8 @@ void Parser::parse_program(){
     //-> decl-section block
     Token t;
     t = lexer.peek(1);
+    cout << "Parsing program" << endl;
+    t.Print();
     if(t.token_type == SCALAR) {
         parse_decl_section();
         parse_block();
@@ -324,7 +415,7 @@ void parse_and_generate_AST() {
     cout << "1" << endl;
     Parser parser;
 
-    parser.readAndPrintAllInput();
+    //parser.readAndPrintAllInput();
 
     parser.parse_program();
 
