@@ -7,6 +7,7 @@
 #include "execute.h"
 
 
+
 using namespace std;
 
 
@@ -15,10 +16,10 @@ Token Parser::expect(TokenType expected_type)
 {
     Token t;
 
-    //t = lexer.GetToken();
+    t = lexer.GetToken();
     if (t.token_type != expected_type)
     {
-        cout << "Error: expected token of type " << expected_type << " but got " << t.token_type << endl;
+        cout << "Error: expected token of type " << expected_type << " but got " << t.lexeme << endl;
         exit(1);
     }
     return t;
@@ -65,7 +66,7 @@ void Parser::parse_primary() {
     //-> ID
     //-> NUM
     Token t;
-    //t = lexer.peek(1);
+    t = lexer.peek(1);
     if(t.token_type == ID || t.token_type == NUM){
         expect(t.token_type);
     }else{
@@ -105,13 +106,13 @@ void Parser::parse_expr(){
             //If stack is empty, then input is accepted
             return;
         }else{
-            //t = lexer.peek(1);
+            t = lexer.peek(1);
             b1 = t.token_type;
             a1 = s.top();
             a = precedence(a1);
             b = precedence(b1);
             if(ast_table[a][b] == '<' || ast_table[a][b] == '=') {
-                //t = lexer.GetToken();
+                t = lexer.GetToken();
                 s.push(t.token_type);
             }else if(ast_table[a][b] == '>'){
                 //Reduce
@@ -135,13 +136,13 @@ void Parser::parse_variable_access(){
     //-> ID LBRAC expr RBRAC
     //-> ID LBRAC DOT RBRAC
     Token t, t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
+    t = lexer.peek(1);
+    t2 = lexer.peek(2);
     if(t.token_type == ID){
         expect(ID);
         if(t2.token_type == LBRAC){
             expect(LBRAC);
-            //t = lexer.peek(1);
+            t = lexer.peek(1);
             if(t.token_type == DOT){
                 expect(DOT);
                 expect(RBRAC);
@@ -160,7 +161,7 @@ void Parser::parse_variable_access(){
 void Parser::parse_output_stmt(){
     //-> OUTPUT variable-access SEMICOLON
     Token t;
-    //t = lexer.peek(1);
+    t = lexer.peek(1);
     if(t.token_type == OUTPUT){
         expect(OUTPUT);
         parse_variable_access();
@@ -174,7 +175,7 @@ void Parser::parse_assign_stmt(){
     //-> variable-access EQUAL expr SEMICOLON
 
     Token t;
-    //t = lexer.peek(1);
+    t = lexer.peek(1);
     if(t.token_type == ID){
         expect(ID);
         parse_variable_access();
@@ -191,7 +192,7 @@ void Parser::parse_stmt(){
     //-> assign-stmt
     //-> output-stmt
     Token t;
-    //t = lexer.peek(1);
+    t = lexer.peek(1);
     if(t.token_type == ID){
         parse_assign_stmt();
     }else if(t.token_type == OUTPUT){
@@ -205,8 +206,8 @@ void Parser::parse_stmt_list() {
     //-> stmt
     //-> stmt stmt-list
     Token t, t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
+    t = lexer.peek(1);
+    t2 = lexer.peek(2);
     if(t.token_type == ID || t.token_type == OUTPUT){
         parse_stmt();
         if(t2.token_type == ID || t2.token_type == OUTPUT){
@@ -223,7 +224,7 @@ void Parser::parse_block() {
     //-> LBRACE stmt-list RBRACE
     expect(LBRACE);
     Token t;
-    //t = lexer.GetToken();
+    t = lexer.GetToken();
     if(t.token_type == ID || t.token_type == OUTPUT){
         parse_stmt_list();
         expect(RBRACE);
@@ -239,8 +240,8 @@ void Parser::parse_id_list(){
     //-> ID id-list
     expect(ID);
     Token t , t2;
-    //t = lexer.peek(1);
-    //t2 = lexer.peek(2);
+    t = lexer.peek(1);
+    t2 = lexer.peek(2);
     if(t.token_type == ID){
         expect(ID);
         if(t2.token_type == ID){
@@ -256,7 +257,7 @@ void Parser::parse_id_list(){
 void Parser::parse_array_decl_section(){
     //-> ARRAY id-list
     Token t;
-    //t = lexer.GetToken();
+    t = lexer.GetToken();
     if(t.token_type == ARRAY){
         expect(ARRAY);
         parse_id_list();
@@ -270,7 +271,7 @@ void Parser::parse_array_decl_section(){
 void Parser::parse_scalar_decl_section(){
     //-> SCALAR id-list
     Token t;
-    //t = lexer.GetToken();
+    t = lexer.GetToken();
     if(t.token_type == SCALAR){
         expect(SCALAR);
         parse_id_list();
@@ -283,40 +284,47 @@ void Parser::parse_scalar_decl_section(){
 
 void Parser::parse_decl_section(){
     //-> scalar-decl-section array-decl-section
-    Token t;
-    //t = lexer.peek(1);
-    if(t.token_type == SCALAR) {
         parse_scalar_decl_section();
         parse_array_decl_section();
-    }else if(t.token_type == END_OF_FILE){
-        return;
-    }else{
-        syntax_error();
-    }
 
 }
 
 void Parser::parse_program(){
     //-> decl-section block
     Token t;
-    //t = lexer.peek(1);
+    t = lexer.peek(1);
     if(t.token_type == SCALAR) {
         parse_decl_section();
         parse_block();
-    }else{
-        syntax_error();
+    }else if(t.token_type == END_OF_FILE){
+        return;
     }
 }
 
 
+void Parser::readAndPrintAllInput()
+{
+    Token t;
+
+    // get a token
+    t = lexer.GetToken();
+
+    // while end of input is not reached
+    while (t.token_type != END_OF_FILE)
+    {
+        t.Print();         	// pringt token
+        t = lexer.GetToken();	// and get another one
+    }
+
+    // note that you should use END_OF_FILE and not EOF
+}
 
 void parse_and_generate_AST() {
     //Parse the program
-
+    cout << "1" << endl;
     Parser parser;
 
-
-    cout << "11111" << endl;
+    parser.readAndPrintAllInput();
 
     parser.parse_program();
 
