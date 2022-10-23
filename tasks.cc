@@ -31,16 +31,16 @@ void Parser::syntax_error(){
     exit(1);
 }
 
-TokenType Parser::terminalpeek(stack<TokenType> s){
+TokenType Parser::terminalpeek(stack<stackNode> s){
     //terminal at the top of stack or just below
     //if top is nonterminal
-    stack<TokenType> temp = s;
-    if(s.top() == PLUS || s.top() == MINUS || s.top() == MULT || s.top() == DIV || s.top() == LBRACE || s.top() == RBRACE || s.top() == LBRAC || s.top() == DOT || s.top() == RBRAC || s.top() == NUM || s.top() == ID || s.top() == END_OF_FILE){
-        return s.top();
+    stack<stackNode> temp = s;
+    if(s.top().terminal.token_type == PLUS || s.top().terminal.token_type == MINUS || s.top().terminal.token_type == MULT || s.top().terminal.token_type == DIV || s.top().terminal.token_type == LBRACE || s.top().terminal.token_type == RBRACE || s.top().terminal.token_type == LBRAC || s.top().terminal.token_type == DOT || s.top().terminal.token_type == RBRAC || s.top().terminal.token_type == NUM || s.top().terminal.token_type == ID || s.top().terminal.token_type == END_OF_FILE){
+        return s.top().terminal.token_type;
     }
     else{
         temp.pop();
-        return temp.top();
+        return temp.top().terminal.token_type;
     }
 
 }
@@ -115,8 +115,9 @@ void Parser::parse_expr(){
     //Initially stack contains $, scanner reads start of W
 
     //Initialize stack
-    stack<TokenType> s;
-    stack<TokenType> temp;
+    //Stack will use dataype stackNode created in tasks.h
+    stack<stackNode> s;
+    stack<stackNode> temp;
 
     //Initialize input
     Token t;
@@ -128,12 +129,17 @@ void Parser::parse_expr(){
     test.Print();
 
     //Push $ onto stack
-    //s.push(END_OF_FILE);
+    // Create a stackNode for eof
+    stackNode* eof = new stackNode();
+    eof->terminal.token_type = END_OF_FILE;
+    eof->terminal.lexeme = "$";
+    eof->enumType = 1;
+    s.push(*eof);
 
 
     while(!s.empty()) {
 
-        if ('$' == s.top()) {
+        if (s.top().terminal.token_type == END_OF_FILE) {
             //If stack is empty, then input is accepted
             return;
         } else {
@@ -146,7 +152,7 @@ void Parser::parse_expr(){
             if (ast_table[a][b] == '<' || ast_table[a][b] == '=') {
                 t = lexer.GetToken();
                 t.Print();
-                s.push(t.token_type);
+                //s.push(t);
             } else if (ast_table[a][b] == '>') {
                 //Reduce
                 stack<TokenType> RHS;
@@ -581,3 +587,6 @@ instNode* parse_and_generate_statement_list()
 
     return code;
 }
+
+
+
