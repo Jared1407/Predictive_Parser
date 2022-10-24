@@ -33,6 +33,13 @@ struct exprNode {
 
 };
 
+//expr rules
+vector<string> exprRules =
+        {
+        "E+E", "E-E", "E*E", "E/E", "(E)", "E[E]", "E[.]"
+        };
+
+
 //stackNode
 struct stackNode{
     //Store the enum type as EXPR or TERM

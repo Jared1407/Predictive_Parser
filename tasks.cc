@@ -20,7 +20,7 @@ Token Parser::expect(TokenType expected_type)
     t = lexer.GetToken();
     if (t.token_type != expected_type)
     {
-        cout << "Error: expected token of type " << expected_type << " but got " << t.lexeme << endl;
+        cout << "Error: expected token of type " << expected_type << " but got " << t.token_type << endl;
         exit(1);
     }
     return t;
@@ -117,16 +117,25 @@ void Parser::parse_expr(){
     //Initialize stack
     //Stack will use dataype stackNode created in tasks.h
     stack<stackNode> s;
-    stack<stackNode> temp;
 
     //Initialize input
-    Token t;
-    TokenType a1, b1;
+    Token t, a1, b1;
     int a, b;
     // a and b
     Token test = lexer.peek(1);
     cout << "expr" << endl;
     test.Print();
+
+
+    /*// get a token
+    t = lexer.GetToken();
+
+    // while end of input is not reached
+    while (t.token_type != SEMICOLON)
+    {
+        t.Print();         	// pringt token
+        t = lexer.GetToken();	// and get another one
+    }*/
 
     //Push $ onto stack
     // Create a stackNode for eof
@@ -139,39 +148,45 @@ void Parser::parse_expr(){
 
     while(!s.empty()) {
 
-        if (s.top().terminal.token_type == END_OF_FILE) {
+        if (s.top().terminal.token_type == END_OF_FILE && lexer.peek(1).token_type == END_OF_FILE) {
             //If stack is empty, then input is accepted
             return;
         } else {
             t = lexer.peek(1);
-            b1 = t.token_type;
-            a1 = terminalpeek(s);
-            a = precedence(a1);
-            b = precedence(b1);
-            cout << ast_table[a][b] << endl;
+            b1 = t;
+            a1.token_type = terminalpeek(s);
+            a = precedence(a1.token_type); // a = terminal at top of stack or just below if top != terminal
+            b = precedence(b1.token_type); // b = next token in input
+            cout << char(ast_table[a][b]) << endl;
             if (ast_table[a][b] == '<' || ast_table[a][b] == '=') {
+                stackNode *temp = new stackNode();
                 t = lexer.GetToken();
-                t.Print();
-                //s.push(t);
+                temp->terminal = t;
+                temp->enumType = 1;
+                s.push(*temp);
+                cout << "pushed " << t.lexeme << endl;
             } else if (ast_table[a][b] == '>') {
                 //Reduce
-                stack<TokenType> RHS;
-                /*
+                stack<stackNode> RHS;
+                Token lastpoped;
+                string ruleToCheck = "";
                 while (true) {
+                    stackNode temp2 = s.top();
+                    s.pop(); // pop both terminals and nonterminals
 
-                    TokenType temps = s.top();
-                    TokenType last_popped_term;
-                    s.pop();
-
-                    if (is_terminal(temps)) {
-                        last_popped_term = temps;
-                        RHS.push(temps);
+                    if (temp2.enumType == 1){
+                        lastpoped = temp2.terminal;
                     }
-                    if (is_terminal(s.top()) && ast_table[precedence(terminalpeek(s))][precedence(last_popped_term)] == '<') {
+                    RHS.push(temp2);
+                    if((s.top().enumType == 1)  && ast_table[precedence(terminalpeek(s))][precedence(lastpoped.token_type)] == '<'){
                         false;
                     }
+
                 }
-                 */
+               /* if () {
+                    //reduce
+                }*/
+
 
                 // if E-> RHS is a production, then reduce E -> RHS
                 // and stack.push(E)
@@ -221,6 +236,7 @@ void Parser::parse_output_stmt(){
     if(t.token_type == OUTPUT){
         expect(OUTPUT);
         parse_variable_access();
+        cout << "output_stmt" << endl;
         expect(SEMICOLON);
     }else{
         syntax_error();
@@ -229,9 +245,13 @@ void Parser::parse_output_stmt(){
 
 void Parser::parse_assign_stmt(){
     //-> variable-access EQUAL expr SEMICOLON
-    Token test = lexer.peek(1);
+    // Variable access can be completely implemented through assign stmt so no need for variable access. Right?
+    //Done I believe
+    Token preExpect = lexer.peek(1);
+    Token preExpect2 = lexer.peek(2);
     cout << "assign stmt" << endl;
-    test.Print();
+    preExpect.Print();
+    preExpect2.Print();
 
     expect(ID);
     Token t1, t2;
@@ -241,17 +261,18 @@ void Parser::parse_assign_stmt(){
         expect(LBRAC);
         expect(DOT);
         expect(RBRAC);
-    }else if(t1.token_type == LBRAC && (t2.token_type == ID || t2.token_type == NUM)){
+
+    }else if(t1.token_type == LBRAC && (t2.token_type == ID || t2.token_type == NUM || t2.token_type == LPAREN)){
         expect(LBRAC);
         parse_expr();
         expect(RBRAC);
-    }else{
-
-
     }
+
     expect(EQUAL);
     parse_expr();
+    cout << "end of assign stmt" << endl;
     expect(SEMICOLON);
+
 }
 
 
@@ -324,7 +345,7 @@ void Parser::parse_id_list(){
     cout << "id list" << endl;
     test.Print();
     expect(ID);
-    Token t , t2;
+    Token t;
     t = lexer.peek(1);
     if(t.token_type == ID){
         parse_id_list();
