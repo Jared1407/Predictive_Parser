@@ -196,6 +196,8 @@ stackNode Parser::reduce(stack<stackNode> RHS){
         toComapre += RHS_to_string(E);
     }
 
+    cout << "toCompare: " << toComapre << endl;
+
     if(toComapre == "E"){
         return E;
     }else if(toComapre == "EPLUSE"){
@@ -302,9 +304,11 @@ void Parser::parse_expr(){
         cout << endl;
         if (s.top().terminal.token_type == END_OF_FILE && peek_symbol().token_type == END_OF_FILE) {
             //If stack is empty, then input is accepted
+            cout << "Input accepted" << endl;
+            exit(1);
             return;
         } else {
-            t = peek_symbol();
+            t = lexer.peek(1);
             b1 = t;
             a1.token_type = terminalpeek(s);
             a = precedence(a1.token_type); // a = terminal at top of stack or just below if top != terminal
@@ -312,12 +316,19 @@ void Parser::parse_expr(){
             cout << char(ast_table[a][b]) << endl;
             if (ast_table[a][b] == '<' || ast_table[a][b] == '=') {
                 stackNode temp;
-                t = get_symbol();
+                Token ex;
+                ex = get_symbol();
+                if(ex.token_type == END_OF_FILE){
+                    t = lexer.GetToken();
+                }else{
+                    t = get_symbol();
+                }
+
                 temp.terminal = t;
                 temp.enumType = 1;
 
                 s.push(temp);
-                cout << "pushed: ";
+                cout << "pushed to stack: ";
                 t.Print();
                 cout << endl;
 
@@ -330,6 +341,12 @@ void Parser::parse_expr(){
                     Token lastpoped;
                     //Pop stack
                     stackNode temp = s.top();
+                    cout << "popped from stack: ";
+                    if(temp.enumType == 1){
+                        temp.terminal.Print();
+                    }else{
+                        cout << temp.expr.operatorType << endl;
+                    }
                     s.pop();
                     //if term last popped is terminal
                     if(temp.enumType == 1){
@@ -345,7 +362,7 @@ void Parser::parse_expr(){
                     RHS.push(temp);
 
                     //loop break condition
-                    if((s.top().enumType == 1)  && ast_table[precedence(terminalpeek(s))][precedence(lastpoped.token_type)] == '<'){
+                    if((is_terminal(s.top().terminal.token_type))  && ast_table[precedence(terminalpeek(s))][precedence(lastpoped.token_type)] == '<'){
                         secondWhile = false;
                     }
                 }
@@ -356,7 +373,7 @@ void Parser::parse_expr(){
 
                 //cout << "E: " << RHS_to_string(E) << endl;
                 RHS_to_string(E);
-
+                cout << "pushed E to stack" << endl;
                 s.push(E);
 
                //take current RHS and create a sting to compare to the expr rules
