@@ -12,18 +12,18 @@ void parse_and_generate_AST();
 
 // Structs
 struct exprNode {
-    int operatorType; //enum type, ID, PLUS, MINUS, DIV, ARRAY, WHOLE ARRAY
+    TokenType operatorType; //enum type, ID, PLUS, MINUS, DIV, ARRAY, WHOLE ARRAY
 
-    int exprType; // expr type, SCALAR, ARRAY, ARRAYDDELC, ERROR
+    //int exprType; // expr type, SCALAR, ARRAY, ARRAYDDELC, ERROR, Not used until task 2
 
-    struct { // ID
+    struct { // ID or NUM
         string varName;
         int line_no;
     } id;
 
     struct { // OPERATOR = PLUS, MINUS, DIV, MULT, ARRAY ELEM
-        struct treeNode *left;
-        struct treeNode *right;
+        struct exprNode *left;
+        struct exprNode *right;
     } child;
 
     struct { // OPERATOR == WHOLE ARRAY
@@ -33,11 +33,7 @@ struct exprNode {
 
 };
 
-//expr rules
-vector<string> exprRules =
-        {
-        "E+E", "E-E", "E*E", "E/E", "(E)", "E[E]", "E[.]"
-        };
+
 
 
 //stackNode
@@ -47,7 +43,8 @@ struct stackNode{
     int enumType;
     //A stack node can contain an expression or a terminal
     //We will use a union to store either
-    struct exprNode* expr;
+
+    struct exprNode expr;
     Token terminal;
 };
 
@@ -75,9 +72,21 @@ private:
 
 
 public:
+    //expr Rules
+    //expr rules
+    vector<string> exprRules =
+            {
+                    "EPLUSE", "EMINUSE", "EMULTE", "EDIVE", "LPARENERPAREN", "ELBRACERBRAC", "ELBRACDOTRBRAC", "ID", "NUM"
+            };
+
     //Helper Functions
+    string token_type_to_string(TokenType t);
+    Token get_symbol();
+    Token peek_symbol();
     void syntax_error();
     int precedence(TokenType t);
+    string RHS_to_string(stackNode E);
+    stackNode reduce(stack<stackNode> RHS);
     //Must be public
     void readAndPrintAllInput();
     void parse_program();
