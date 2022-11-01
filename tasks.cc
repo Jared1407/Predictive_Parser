@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <stack>
 #include <string>
+#include <queue>
 #include "tasks.h"
 #include "lexer.h"
 #include "execute.h"
@@ -85,6 +86,33 @@ string Parser::token_type_to_string(TokenType t){
     }
 }
 
+void Parser::print_E(exprNode* E){
+    //Breadth first search print of the expression tree
+    //We will use a queue to do this
+    queue<exprNode*> q;
+    q.push(E);
+
+    while(!q.empty()){
+        exprNode *temp = q.front();
+        q.pop();
+        //cout << "Operator: " << temp->operatorType << endl;
+
+
+        if(temp->operatorType == PLUS || temp->operatorType == MINUS || temp->operatorType == MULT || temp->operatorType == DIV || temp->operatorType == LBRAC){
+            cout << "Operator: " << temp->operatorType << endl;
+            //Left child
+            if(is_terminal(temp->child.left->operatorType)){
+                q.push(temp->child.left);
+            }
+            //Right child
+            if(is_terminal(temp->child.right->operatorType)){
+                q.push(temp->child.right);
+            }
+        }
+    }
+
+}
+
 Token Parser::peek_symbol(){
     Token t = lexer.peek(1);
     Token t2 = lexer.peek(2);
@@ -151,10 +179,12 @@ int Parser::precedence(TokenType t) {
     }
 }
 
-string Parser::RHS_to_string(stackNode E){
+string Parser::RHS_to_string(stackNode E) {
     string s = "";
     stackNode temp = E;
-    if(temp.expr.operatorType == ID || temp.expr.operatorType == NUM) {
+    if (temp.expr.operatorType == ID || temp.expr.operatorType == NUM) {
+        s += "E";
+    }else if(temp.expr.child.left != nullptr){
         s += "E";
     }else{
         s += token_type_to_string(temp.expr.operatorType);
@@ -164,32 +194,32 @@ string Parser::RHS_to_string(stackNode E){
 
 }
 
-stackNode Parser::reduce(stack<stackNode> RHS){
+stackNode Parser::reduce(stack<stackNode> RHS) {
     //Create E node
     stackNode E;
     string toComapre;
     stack<stackNode> temp = RHS;
-    while(!temp.empty()){
+    while (!temp.empty()) {
         stackNode top = temp.top();
         //construct E
-        if(top.enumType == 1) {
-            if(top.terminal.token_type == ID){
+        if (top.enumType == 1) {
+            if (top.terminal.token_type == ID) {
                 E.enumType = 0;
                 E.expr.operatorType = ID;
                 E.expr.id.varName = top.terminal.lexeme;
                 E.expr.id.line_no = top.terminal.line_no;
-            }else if(top.terminal.token_type == NUM){
+            } else if (top.terminal.token_type == NUM) {
                 E.enumType = 0;
                 E.expr.operatorType = NUM;
                 E.expr.id.varName = top.terminal.lexeme;
                 E.expr.id.line_no = top.terminal.line_no;
-            }else {
+            } else {
                 E.enumType = 0;
                 E.expr.operatorType = top.terminal.token_type;
                 E.expr.child.left = nullptr;
                 E.expr.child.right = nullptr;
             }
-        }else if(top.enumType == 0){
+        } else if (top.enumType == 0) {
             E = top;
         }
         temp.pop();
@@ -198,9 +228,9 @@ stackNode Parser::reduce(stack<stackNode> RHS){
 
     cout << "toCompare: " << toComapre << endl;
 
-    if(toComapre == "E"){
+    if (toComapre == "E") {
         return E;
-    }else if(toComapre == "EPLUSE"){
+    } else if (toComapre == "EPLUSE") {
         cout << "EPLUSE" << endl;
         stack<stackNode> temp = RHS;
         stackNode Ex;
@@ -218,7 +248,43 @@ stackNode Parser::reduce(stack<stackNode> RHS){
         Ex.expr.child.right = &E1.expr;
 
         return Ex;
+    }else if(toComapre == "EMINUSE"){
+        cout << "EMINUSE" << endl;
+        stack<stackNode> temp = RHS;
+        stackNode Ex;
+        Ex.enumType = 0;
+        Ex.expr.operatorType = MINUS;
 
+        stackNode E2 = temp.top();
+        temp.pop();
+        Ex.expr.child.left = &E2.expr;
+
+        temp.pop();
+
+        stackNode E1 = temp.top();
+        temp.pop();
+        Ex.expr.child.right = &E1.expr;
+
+        return Ex;
+
+    }else if(toComapre == "ELBRACERBRAC"){
+        cout << "ELBRACERBRAC" << endl;
+        stack<stackNode> temp = RHS;
+        stackNode Ex;
+        Ex.enumType = 0;
+        Ex.expr.operatorType = LBRAC;
+
+        stackNode E2 = temp.top();
+        temp.pop();
+        Ex.expr.child.left = &E2.expr;
+
+        temp.pop();
+
+        stackNode E1 = temp.top();
+        temp.pop();
+        Ex.expr.child.right = &E1.expr;
+
+        return Ex;
     }
 
     cout << "Comapre: " << toComapre << endl;
@@ -265,20 +331,12 @@ void Parser::parse_expr(){
     Token t, a1, b1;
     int a, b;
     // a and b
+
+    //Testing: TBC (To be commented out)
     Token test = lexer.peek(1);
     cout << "expr" << endl;
     test.Print();
 
-
-    /*// get a token
-    t = lexer.GetToken();
-
-    // while end of input is not reached
-    while (t.token_type != SEMICOLON)
-    {
-        t.Print();         	// pringt token
-        t = lexer.GetToken();	// and get another one
-    }*/
 
     //Push $ onto stack
     // Create a stackNode for eof
@@ -291,6 +349,8 @@ void Parser::parse_expr(){
     string ruleToCheck;
 
 
+    //End of input boolean
+    bool endOfInput = false;
 
     while(!s.empty()) {
 //        cout << "stack: ";
@@ -302,13 +362,29 @@ void Parser::parse_expr(){
             cout << "stack: " << s.top().expr.operatorType << endl;
         }
         cout << endl;
-        if (s.top().terminal.token_type == END_OF_FILE && peek_symbol().token_type == END_OF_FILE) {
+        if (terminalpeek(s) == END_OF_FILE && peek_symbol().token_type == END_OF_FILE) {
             //If stack is empty, then input is accepted
             cout << "Input accepted" << endl;
+            print_E(&s.top().expr);
             exit(1);
             return;
         } else {
-            t = lexer.peek(1);
+            t = peek_symbol();
+            if(t.token_type == END_OF_FILE){
+                cout << "True 1" << endl;
+                endOfInput = true;
+            }
+            if(!endOfInput){
+                t = peek_symbol();
+            }
+            if(endOfInput){
+                t = lexer.peek(1);
+            }
+            if(t.token_type == SEMICOLON){
+                t = peek_symbol();
+            }
+
+
             b1 = t;
             a1.token_type = terminalpeek(s);
             a = precedence(a1.token_type); // a = terminal at top of stack or just below if top != terminal
@@ -316,13 +392,18 @@ void Parser::parse_expr(){
             cout << char(ast_table[a][b]) << endl;
             if (ast_table[a][b] == '<' || ast_table[a][b] == '=') {
                 stackNode temp;
-                Token ex;
-                ex = get_symbol();
-                if(ex.token_type == END_OF_FILE){
+                t = peek_symbol();
+                if(t.token_type == END_OF_FILE){
+                    cout << "True 2" << endl;
+                    endOfInput = true;
+                }
+                if(endOfInput) {
                     t = lexer.GetToken();
-                }else{
+                    //endOfInput = false;
+                }else if(!endOfInput){
                     t = get_symbol();
                 }
+
 
                 temp.terminal = t;
                 temp.enumType = 1;
@@ -381,7 +462,11 @@ void Parser::parse_expr(){
                 // if E-> RHS is a production, then reduce E -> RHS
                 // and stack.push(E)
                 // else syntax_error();
-            } else {
+            }else if(ast_table[a][b] == 'E') {
+                    cout << "Table Error" << endl;
+                    syntax_error();
+
+            }else {
                 cout << "expr syntax error" << endl;
                 syntax_error();
             }
@@ -442,6 +527,8 @@ void Parser::parse_assign_stmt(){
     cout << "assign stmt" << endl;
     preExpect.Print();
     preExpect2.Print();
+
+    cout << "= " << "ID " << preExpect.lexeme << endl;
 
     expect(ID);
     Token t1, t2;

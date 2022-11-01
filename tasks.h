@@ -10,6 +10,7 @@ using namespace std;
 //Task 1
 void parse_and_generate_AST();
 
+
 // Structs
 struct exprNode {
     TokenType operatorType; //enum type, ID, PLUS, MINUS, DIV, ARRAY, WHOLE ARRAY
@@ -87,6 +88,7 @@ public:
     int precedence(TokenType t);
     string RHS_to_string(stackNode E);
     stackNode reduce(stack<stackNode> RHS);
+    void print_E(exprNode* e);
     //Must be public
     void readAndPrintAllInput();
     void parse_program();
@@ -98,7 +100,7 @@ public:
     //AST
 
     int ast_table[12][12] = {
-        //        +        -        *        /        (        )        [        .       ]       NUM       ID       $
+        //        +        -        *        /       (        )        [        .        ]       NUM       ID        $
         {'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// +
         {'>', '>', '<', '<', '<', '>', '<', 'E', '>', '<', '<', '>'},// -
         {'>', '>', '>', '>', '<', '>', '<', 'E', '>', '<', '<', '>'},// *
